@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.Comparator;
 import java.util.ListIterator;
 
+import automail.LoadRobot;
 import automail.MailItem;
 import automail.PriorityMailItem;
 import automail.Robot;
@@ -43,6 +44,7 @@ public class MailPool implements IMailPool {
 	
 	private LinkedList<Item> pool;
 	private LinkedList<Robot> robots;
+	private LoadRobot loadRobot;
 
 	public MailPool(int nrobots){
 		// Start empty
@@ -65,7 +67,7 @@ public class MailPool implements IMailPool {
             throw e; 
         } 
 	}
-	
+	/*
 	private void loadRobot(ListIterator<Robot> i) throws ItemTooHeavyException {
 		Robot robot = i.next();
 		assert(robot.isEmpty());
@@ -85,6 +87,21 @@ public class MailPool implements IMailPool {
 	            throw e; 
 	        } 
 		}
+	} */
+	
+	private void loadRobot(ListIterator<Robot> i) throws ItemTooHeavyException {
+		ListIterator<Item> j = pool.listIterator();
+		if (pool.size() > 0) {
+		while (loadRobot.loadItem(i, j.next().mailItem) == true) {
+				// Do nothing
+				j.remove();
+
+				if (!i.hasNext()) {
+					break;
+				}
+
+			}
+	}
 	}
 
 	@Override

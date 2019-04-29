@@ -170,17 +170,36 @@ public class Robot {
 	public boolean isEmpty() {
 		return (deliveryItem == null && tube == null);
 	}
-
-	public void addToHand(MailItem mailItem) throws ItemTooHeavyException {
-		assert(deliveryItem == null);
-		deliveryItem = mailItem;
-		if (deliveryItem.weight > INDIVIDUAL_MAX_WEIGHT) throw new ItemTooHeavyException();
+	
+	// Is Tube full
+	public boolean isTubeFull() {
+		return (this.tube != null);
+	}
+	
+	// Is hand full
+	public boolean isHandFull() {
+		return (this.deliveryItem != null);
+	}
+	
+	
+	// When robot hands and tube are full
+	public boolean hasCapacity() {
+		if (deliveryItem == null || tube == null) {
+			return true;
+		}
+		return false;
 	}
 
-	public void addToTube(MailItem mailItem) throws ItemTooHeavyException {
+	
+
+	public void addToHand(MailItem mailItem) {
+		assert(deliveryItem == null);
+		deliveryItem = mailItem;
+	}
+
+	public void addToTube(MailItem mailItem) {
 		assert(tube == null);
 		tube = mailItem;
-		if (tube.weight > INDIVIDUAL_MAX_WEIGHT) throw new ItemTooHeavyException();
 	}
 
 }
