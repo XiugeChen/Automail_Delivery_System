@@ -50,6 +50,7 @@ public class MailPool implements IMailPool {
 		// Start empty
 		pool = new LinkedList<Item>();
 		robots = new LinkedList<Robot>();
+		loadRobot = new LoadRobot();
 	}
 
 	public void addToPool(MailItem mailItem) {
@@ -62,11 +63,15 @@ public class MailPool implements IMailPool {
 	public void step() throws ItemTooHeavyException {
 		try{
 			ListIterator<Robot> i = robots.listIterator();
-			while (i.hasNext()) loadRobot(i);
+			while (i.hasNext()) {
+				System.out.println("robot size: " + robots.size());
+				loadRobot(i);
+			}
 		} catch (Exception e) { 
             throw e; 
         } 
-	}
+	} 
+	
 	/*
 	private void loadRobot(ListIterator<Robot> i) throws ItemTooHeavyException {
 		Robot robot = i.next();
@@ -89,19 +94,26 @@ public class MailPool implements IMailPool {
 		}
 	} */
 	
+	
 	private void loadRobot(ListIterator<Robot> i) throws ItemTooHeavyException {
 		ListIterator<Item> j = pool.listIterator();
+		
 		if (pool.size() > 0) {
-		while (loadRobot.loadItem(i, j.next().mailItem) == true) {
-				// Do nothing
-				j.remove();
-
-				if (!i.hasNext()) {
-					break;
+			try {
+				while (loadRobot.loadItem(i, j.next().mailItem, !j.hasNext())) {
+					j.remove();
+					
+					if (!j.hasNext())
+						break;
 				}
-
+			} catch (Exception e) {
+				throw e;
 			}
-	}
+		}
+		// just iterate through the robot if nothing in the pool
+		else {
+			i.next();
+		}
 	}
 
 	@Override
