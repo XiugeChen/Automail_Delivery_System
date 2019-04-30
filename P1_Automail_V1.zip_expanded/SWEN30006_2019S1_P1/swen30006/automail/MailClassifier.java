@@ -1,5 +1,9 @@
 package automail;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.TreeMap;
+
 // Singleton mail classifier class
 public class MailClassifier {
 	
@@ -11,11 +15,17 @@ public class MailClassifier {
     // Determine number of robots needed to carry a mail item
     static public final int SMALL_TEAM = 1;
     static public final int MEDIUM_TEAM = 2;
-    static public final int LARGE_TEAM = 3; 
+    static public final int LARGE_TEAM = 3;
     
     private static MailClassifier instance = null;
     
-    private MailClassifier() {}
+    private TreeMap<Integer, Integer> teamWeightLimit;
+    
+    private MailClassifier() {
+    	teamWeightLimit = new TreeMap<>();
+    	
+    	populateTeamWeightLimit();
+    }
     
     // Singleton get instance method
     public static MailClassifier getInstance() {
@@ -25,14 +35,40 @@ public class MailClassifier {
     	return instance;
     }
     
-    // Method to determine how many 
+    /**
+     * last team has 
+     * @param item
+     * @return
+     */
     public int numRobotsNeeded(MailItem item) {
-    	if (item.getWeight() <= INDIVIDUAL_MAX_WEIGHT) {
-    		return SMALL_TEAM;
-    	} else if (item.getWeight() <= PAIR_MAX_WEIGHT) {
-    		return MEDIUM_TEAM;
+    	int highestKey = 0;
+    	
+    	for (int i: teamWeightLimit.keySet()) {
+    		if (item.getWeight() <= teamWeightLimit.get(i)) 
+    			return i;
+    		
+    		highestKey = i;
     	}
-    	return LARGE_TEAM;
+    	
+    	// return highestKey which means item exception will be thrown while loading robots
+    	return highestKey;
     }
-
+    
+    /**
+     * 
+     * @param numRobot
+     * @return
+     */
+    public int getWeightLimit(int numRobots) {
+    	return teamWeightLimit.get(numRobots);
+    }
+    
+    /**
+     * 
+     */
+    private void populateTeamWeightLimit() {
+    	teamWeightLimit.put(SMALL_TEAM, INDIVIDUAL_MAX_WEIGHT);
+    	teamWeightLimit.put(MEDIUM_TEAM, PAIR_MAX_WEIGHT);
+    	teamWeightLimit.put(LARGE_TEAM, TRIPLE_MAX_WEIGHT);
+    }
 }

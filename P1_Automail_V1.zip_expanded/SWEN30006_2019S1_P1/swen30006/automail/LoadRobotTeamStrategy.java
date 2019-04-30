@@ -50,14 +50,7 @@ public class LoadRobotTeamStrategy implements ILoadStrategy {
 	@Override
 	public void checkWeight(MailItem item) throws ItemTooHeavyException {
 		// TODO Auto-generated method stub
-		if (numRobots == MailClassifier.MEDIUM_TEAM) {
-			if (item.getWeight() > MailClassifier.PAIR_MAX_WEIGHT)
-				throw new ItemTooHeavyException();
-		}
-		else if (numRobots == MailClassifier.LARGE_TEAM) {
-			if (item.getWeight() > MailClassifier.TRIPLE_MAX_WEIGHT) 
-				throw new ItemTooHeavyException();
-		}
+		if (item.getWeight() > MailClassifier.getInstance().getWeightLimit(numRobots)) 
+			throw new ItemTooHeavyException();
 	}
-
 }

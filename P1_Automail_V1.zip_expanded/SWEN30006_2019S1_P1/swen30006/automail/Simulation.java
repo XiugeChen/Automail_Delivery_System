@@ -131,7 +131,6 @@ public class Simulation {
     			}
     		}
     	}
-
     }
     
     private static double calculateDeliveryScore(MailItem deliveryItem) {

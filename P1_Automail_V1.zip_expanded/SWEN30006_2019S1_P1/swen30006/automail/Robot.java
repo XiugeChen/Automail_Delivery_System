@@ -104,12 +104,7 @@ public class Robot {
     private void deliveringStep() throws ExcessiveDeliveryException {
     	if(current_floor == destination_floor){ // If already here drop off either way
             /** Delivery complete, report this to the simulator! */
-    		// only the main robot is responsible for delivering item, not all other cooperating robots
-    		if (!isCooperating)
-    			delivery.deliver(deliveryItem);
-    		else
-    			isCooperating = false;
-    		
+    		deliverItem(deliveryItem);
             deliveryItem = null;
             deliveryCounter++;
             if(deliveryCounter > 2){  // Implies a simulation bug
@@ -130,6 +125,17 @@ public class Robot {
     		/** The robot is not at the destination yet, move towards it! */
             moveTowards(destination_floor);
 		}
+    }
+    
+    /**
+     * only the main robot is responsible for delivering item, not all other cooperating robots
+     * @param mailItem
+     */
+    private void deliverItem(MailItem mailItem) {
+    	if (!isCooperating)
+			delivery.deliver(mailItem);
+		else
+			isCooperating = false;
     }
 
     /**

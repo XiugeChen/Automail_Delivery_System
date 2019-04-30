@@ -34,7 +34,7 @@ public class LoadRobotStrategy implements ILoadStrategy {
 	
 	@Override
 	public void checkWeight(MailItem item) throws ItemTooHeavyException {
-		if (item.getWeight() > MailClassifier.INDIVIDUAL_MAX_WEIGHT) 
+		if (item.getWeight() > MailClassifier.getInstance().getWeightLimit(1)) 
 			throw new ItemTooHeavyException();
 	}
 }
