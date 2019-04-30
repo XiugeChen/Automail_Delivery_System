@@ -4,7 +4,9 @@ import java.util.LinkedList;
 import java.util.Comparator;
 import java.util.ListIterator;
 
-import automail.LoadRobot;
+import automail.ILoadStrategy;
+import automail.LoadRobotStrategy;
+import automail.LoadStrategyFactory;
 import automail.MailItem;
 import automail.PriorityMailItem;
 import automail.Robot;
@@ -44,13 +46,11 @@ public class MailPool implements IMailPool {
 	
 	private LinkedList<Item> pool;
 	private LinkedList<Robot> robots;
-	private LoadRobot loadRobot;
 
 	public MailPool(int nrobots){
 		// Start empty
 		pool = new LinkedList<Item>();
 		robots = new LinkedList<Robot>();
-		loadRobot = new LoadRobot();
 	}
 
 	public void addToPool(MailItem mailItem) {
@@ -62,49 +62,29 @@ public class MailPool implements IMailPool {
 	@Override
 	public void step() throws ItemTooHeavyException {
 		try{
-			ListIterator<Robot> i = robots.listIterator();
-			while (i.hasNext()) {
-				System.out.println("robot size: " + robots.size());
-				loadRobot(i);
-			}
+			ListIterator<Robot> robotI = robots.listIterator();
+			while (robotI.hasNext()) loadItem(robotI);
+			
+			ListIterator<Robot> newRobotI = robots.listIterator();
+			dispatchRobot(newRobotI);
 		} catch (Exception e) { 
             throw e; 
         } 
 	} 
 	
-	/*
-	private void loadRobot(ListIterator<Robot> i) throws ItemTooHeavyException {
-		Robot robot = i.next();
-		assert(robot.isEmpty());
-		// System.out.printf("P: %3d%n", pool.size());
+	private void loadItem(ListIterator<Robot> i) throws ItemTooHeavyException {
 		ListIterator<Item> j = pool.listIterator();
-		if (pool.size() > 0) {
-			try {
-			robot.addToHand(j.next().mailItem); // hand first as we want higher priority delivered first
-			j.remove();
-			if (pool.size() > 0) {
-				robot.addToTube(j.next().mailItem);
-				j.remove();
-			}
-			robot.dispatch(); // send the robot off if it has any items to deliver
-			i.remove();       // remove from mailPool queue
-			} catch (Exception e) { 
-	            throw e; 
-	        } 
-		}
-	} */
-	
-	
-	private void loadRobot(ListIterator<Robot> i) throws ItemTooHeavyException {
-		ListIterator<Item> j = pool.listIterator();
+		ILoadStrategy loadStrategy;
 		
 		if (pool.size() > 0) {
 			try {
-				while (loadRobot.loadItem(i, j.next().mailItem, !j.hasNext())) {
-					j.remove();
+				while (j.hasNext()) {
+					MailItem mailItem = j.next().mailItem;
 					
-					if (!j.hasNext())
-						break;
+					loadStrategy = LoadStrategyFactory.getFactory().getStrategy(mailItem);
+					
+					if (loadStrategy.loadItem(i, mailItem))
+						j.remove();
 				}
 			} catch (Exception e) {
 				throw e;
@@ -113,6 +93,21 @@ public class MailPool implements IMailPool {
 		// just iterate through the robot if nothing in the pool
 		else {
 			i.next();
+		}
+	}
+	
+	/**
+	 * dispatch any robot that is not empty (has items in its hand or tube)
+	 * @param robotI: robot list iterator
+	 */
+	private void dispatchRobot(ListIterator<Robot> robotI) {
+		while (robotI.hasNext()) {
+			Robot robot = robotI.next();
+			
+			if (!robot.isEmpty()) {
+				robot.dispatch();
+				robotI.remove();
+			}
 		}
 	}
 

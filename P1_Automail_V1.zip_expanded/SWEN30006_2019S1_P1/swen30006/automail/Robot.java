@@ -10,11 +10,6 @@ import java.util.TreeMap;
  * The robot delivers mail!
  */
 public class Robot {
-	
-    static public final int INDIVIDUAL_MAX_WEIGHT = 2000;
-    static public final int PAIR_MAX_WEIGHT = 2600;
-    static public final int TRIPLE_MAX_WEIGHT = 3000;
-
     IMailDelivery delivery;
     protected final String id;
     /** Possible states the robot can be in */
@@ -24,12 +19,13 @@ public class Robot {
     private int destination_floor;
     private IMailPool mailPool;
     private boolean receivedDispatch;
+    // true means this robot is cooperating with other robots and not responsible for the final delivery step
+    private boolean isCooperating;
     
     private MailItem deliveryItem = null;
     private MailItem tube = null;
     
     private int deliveryCounter;
-    
 
     /**
      * Initiates the robot's location at the start to be at the mailroom
@@ -46,11 +42,16 @@ public class Robot {
         this.delivery = delivery;
         this.mailPool = mailPool;
         this.receivedDispatch = false;
+        this.isCooperating = false;
         this.deliveryCounter = 0;
     }
     
     public void dispatch() {
     	receivedDispatch = true;
+    }
+    
+    public void cooperate() {
+    	isCooperating = true;
     }
 
     /**
@@ -60,57 +61,75 @@ public class Robot {
     public void step() throws ExcessiveDeliveryException {    	
     	switch(current_state) {
     		/** This state is triggered when the robot is returning to the mailroom after a delivery */
-    		case RETURNING:
-    			/** If its current position is at the mailroom, then the robot should change state */
-                if(current_floor == Building.MAILROOM_LOCATION){
-                	if (tube != null) {
-                		mailPool.addToPool(tube);
-                        System.out.printf("T: %3d > old addToPool [%s]%n", Clock.Time(), tube.toString());
-                        tube = null;
-                	}
-        			/** Tell the sorter the robot is ready */
-        			mailPool.registerWaiting(this);
-                	changeState(RobotState.WAITING);
-                } else {
-                	/** If the robot is not at the mailroom floor yet, then move towards it! */
-                    moveTowards(Building.MAILROOM_LOCATION);
-                	break;
-                }
-    		case WAITING:
-                /** If the StorageTube is ready and the Robot is waiting in the mailroom then start the delivery */
-                if(!isEmpty() && receivedDispatch){
-                	receivedDispatch = false;
-                	deliveryCounter = 0; // reset delivery counter
-        			setRoute();
-                	changeState(RobotState.DELIVERING);
-                }
-                break;
-    		case DELIVERING:
-    			if(current_floor == destination_floor){ // If already here drop off either way
-                    /** Delivery complete, report this to the simulator! */
-                    delivery.deliver(deliveryItem);
-                    deliveryItem = null;
-                    deliveryCounter++;
-                    if(deliveryCounter > 2){  // Implies a simulation bug
-                    	throw new ExcessiveDeliveryException();
-                    }
-                    /** Check if want to return, i.e. if there is no item in the tube*/
-                    if(tube == null){
-                    	changeState(RobotState.RETURNING);
-                    }
-                    else{
-                        /** If there is another item, set the robot's route to the location to deliver the item */
-                        deliveryItem = tube;
-                        tube = null;
-                        setRoute();
-                        changeState(RobotState.DELIVERING);
-                    }
-    			} else {
-	        		/** The robot is not at the destination yet, move towards it! */
-	                moveTowards(destination_floor);
-    			}
-                break;
+			case RETURNING:
+				returnningStep();
+				break;
+			case WAITING:
+				waitingStep();
+				break;
+			case DELIVERING:
+				deliveringStep();
+				break;
     	}
+    }
+    
+    private void returnningStep() {
+    	/** If its current position is at the mailroom, then the robot should change state */
+        if(current_floor == Building.MAILROOM_LOCATION){
+        	if (tube != null) {
+        		mailPool.addToPool(tube);
+                System.out.printf("T: %3d > old addToPool [%s]%n", Clock.Time(), tube.toString());
+                tube = null;
+        	}
+			/** Tell the sorter the robot is ready */
+			mailPool.registerWaiting(this);
+        	changeState(RobotState.WAITING);
+        	waitingStep();
+        } else {
+        	/** If the robot is not at the mailroom floor yet, then move towards it! */
+            moveTowards(Building.MAILROOM_LOCATION);
+        }
+    }
+    
+    private void waitingStep() {
+    	/** If the StorageTube is ready and the Robot is waiting in the mailroom then start the delivery */
+        if(!isEmpty() && receivedDispatch){
+        	receivedDispatch = false;
+        	deliveryCounter = 0; // reset delivery counter
+			setRoute();
+        	changeState(RobotState.DELIVERING);
+        }
+    }
+    
+    private void deliveringStep() throws ExcessiveDeliveryException {
+    	if(current_floor == destination_floor){ // If already here drop off either way
+            /** Delivery complete, report this to the simulator! */
+    		// only the main robot is responsible for delivering item, not all other cooperating robots
+    		if (!isCooperating)
+    			delivery.deliver(deliveryItem);
+    		else
+    			isCooperating = false;
+    		
+            deliveryItem = null;
+            deliveryCounter++;
+            if(deliveryCounter > 2){  // Implies a simulation bug
+            	throw new ExcessiveDeliveryException();
+            }
+            /** Check if want to return, i.e. if there is no item in the tube*/
+            if(tube == null){
+            	changeState(RobotState.RETURNING);
+            }
+            else{
+                /** If there is another item, set the robot's route to the location to deliver the item */
+                deliveryItem = tube;
+                tube = null;
+                setRoute();
+                changeState(RobotState.DELIVERING);
+            }
+		} else {
+    		/** The robot is not at the destination yet, move towards it! */
+            moveTowards(destination_floor);
+		}
     }
 
     /**
@@ -151,10 +170,6 @@ public class Robot {
             System.out.printf("T: %3d > %7s-> [%s]%n", Clock.Time(), getIdTube(), deliveryItem.toString());
     	}
     }
-
-	public MailItem getTube() {
-		return tube;
-	}
     
 	static private int count = 0;
 	static private Map<Integer, Integer> hashMap = new TreeMap<Integer, Integer>();
@@ -180,17 +195,6 @@ public class Robot {
 	public boolean isHandFull() {
 		return (this.deliveryItem != null);
 	}
-	
-	
-	// When robot hands and tube are full
-	public boolean hasCapacity() {
-		if (deliveryItem == null || tube == null) {
-			return true;
-		}
-		return false;
-	}
-
-	
 
 	public void addToHand(MailItem mailItem) {
 		assert(deliveryItem == null);
