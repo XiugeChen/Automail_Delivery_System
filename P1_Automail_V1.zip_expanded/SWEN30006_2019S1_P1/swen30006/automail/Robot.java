@@ -3,6 +3,9 @@ package automail;
 import exceptions.ExcessiveDeliveryException;
 import exceptions.ItemTooHeavyException;
 import strategies.IMailPool;
+import strategies.IRobotBehaviourStrategy;
+import strategies.RobotBehaviourStrategyFactory;
+
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -15,17 +18,19 @@ public class Robot {
     /** Possible states the robot can be in */
     public enum RobotState { DELIVERING, WAITING, RETURNING }
     public RobotState current_state;
+    /**  */
+    public enum RobotTeamState {SINGLE, TEAM_LEADER, TEAM_MEMBER};
+    private RobotTeamState current_team_state;
     private int current_floor;
     private int destination_floor;
     private IMailPool mailPool;
     private boolean receivedDispatch;
-    // true means this robot is cooperating with other robots and not responsible for the final delivery step
-    private boolean isCooperating;
     
     private MailItem deliveryItem = null;
     private MailItem tube = null;
     
     private int deliveryCounter;
+    private int moveIntervalCounter;
 
     /**
      * Initiates the robot's location at the start to be at the mailroom
@@ -38,20 +43,17 @@ public class Robot {
     	id = "R" + hashCode();
         // current_state = RobotState.WAITING;
     	current_state = RobotState.RETURNING;
+    	current_team_state = RobotTeamState.SINGLE;
         current_floor = Building.MAILROOM_LOCATION;
         this.delivery = delivery;
         this.mailPool = mailPool;
         this.receivedDispatch = false;
-        this.isCooperating = false;
         this.deliveryCounter = 0;
+        this.moveIntervalCounter = 0;
     }
     
     public void dispatch() {
     	receivedDispatch = true;
-    }
-    
-    public void cooperate() {
-    	isCooperating = true;
     }
 
     /**
@@ -74,6 +76,8 @@ public class Robot {
     }
     
     private void returnningStep() {
+    	IRobotBehaviourStrategy behaviourStrategy = RobotBehaviourStrategyFactory.getFactory().getStrategy(this);
+    	
     	/** If its current position is at the mailroom, then the robot should change state */
         if(current_floor == Building.MAILROOM_LOCATION){
         	if (tube != null) {
@@ -87,7 +91,7 @@ public class Robot {
         	waitingStep();
         } else {
         	/** If the robot is not at the mailroom floor yet, then move towards it! */
-            moveTowards(Building.MAILROOM_LOCATION);
+        	behaviourStrategy.moveTowards(this, Building.MAILROOM_LOCATION);
         }
     }
     
@@ -102,19 +106,16 @@ public class Robot {
     }
     
     private void deliveringStep() throws ExcessiveDeliveryException {
-    	if(current_floor == destination_floor){ // If already here drop off either way
+    	IRobotBehaviourStrategy behaviourStrategy = RobotBehaviourStrategyFactory.getFactory().getStrategy(this);
+    	
+    	if (current_floor == destination_floor) { // If already here drop off either way
             /** Delivery complete, report this to the simulator! */
-    		deliverItem(deliveryItem);
-            deliveryItem = null;
-            deliveryCounter++;
-            if(deliveryCounter > 2){  // Implies a simulation bug
-            	throw new ExcessiveDeliveryException();
-            }
+    		behaviourStrategy.deliverItem(this);
+            
             /** Check if want to return, i.e. if there is no item in the tube*/
-            if(tube == null){
+            if (tube == null)
             	changeState(RobotState.RETURNING);
-            }
-            else{
+            else {
                 /** If there is another item, set the robot's route to the location to deliver the item */
                 deliveryItem = tube;
                 tube = null;
@@ -123,19 +124,8 @@ public class Robot {
             }
 		} else {
     		/** The robot is not at the destination yet, move towards it! */
-            moveTowards(destination_floor);
+			behaviourStrategy.moveTowards(this, destination_floor);
 		}
-    }
-    
-    /**
-     * only the main robot is responsible for delivering item, not all other cooperating robots
-     * @param mailItem
-     */
-    private void deliverItem(MailItem mailItem) {
-    	if (!isCooperating)
-			delivery.deliver(mailItem);
-		else
-			isCooperating = false;
     }
 
     /**
@@ -144,18 +134,6 @@ public class Robot {
     private void setRoute() {
         /** Set the destination floor */
         destination_floor = deliveryItem.getDestFloor();
-    }
-
-    /**
-     * Generic function that moves the robot towards the destination
-     * @param destination the floor towards which the robot is moving
-     */
-    private void moveTowards(int destination) {
-        if(current_floor < destination){
-            current_floor++;
-        } else {
-            current_floor--;
-        }
     }
     
     private String getIdTube() {
@@ -211,5 +189,40 @@ public class Robot {
 		assert(tube == null);
 		tube = mailItem;
 	}
-
+	
+	// getter and setter 
+	public int getCurrentFloor() {
+		return this.current_floor;
+	}
+	public MailItem getDeliverItem() {
+		return this.deliveryItem;
+	}
+	public int getDeliveryCounter() {
+		return this.deliveryCounter;
+	}
+	public RobotTeamState getCurrentTeamState() {
+		return this.current_team_state;
+	}
+	public IMailDelivery getDelivery() {
+		return this.delivery;
+	}
+	public int getMoveIntervalCounter() {
+		return this.moveIntervalCounter;
+	}
+	
+	public void setCurrentFloor(int floor) {
+		this.current_floor = floor;
+	}
+	public void setDeliverItem(MailItem mailItem) {
+		this.deliveryItem = mailItem;
+	}
+	public void setDeliveryCounter(int deliveryCounter) {
+		this.deliveryCounter = deliveryCounter;
+	}
+	public void setCurrentTeamState(RobotTeamState newTeamState) {
+		this.current_team_state = newTeamState;
+	}
+	public void setMoveIntervalCounter(int moveIntervalCounter) {
+		this.moveIntervalCounter = moveIntervalCounter;
+	}
 }

@@ -4,9 +4,6 @@ import java.util.LinkedList;
 import java.util.Comparator;
 import java.util.ListIterator;
 
-import automail.ILoadStrategy;
-import automail.LoadRobotStrategy;
-import automail.LoadStrategyFactory;
 import automail.MailItem;
 import automail.PriorityMailItem;
 import automail.Robot;
@@ -46,11 +43,13 @@ public class MailPool implements IMailPool {
 	
 	private LinkedList<Item> pool;
 	private LinkedList<Robot> robots;
+	private int numRobots;
 
 	public MailPool(int nrobots){
 		// Start empty
 		pool = new LinkedList<Item>();
 		robots = new LinkedList<Robot>();
+		numRobots = nrobots;
 	}
 
 	public void addToPool(MailItem mailItem) {
@@ -72,6 +71,11 @@ public class MailPool implements IMailPool {
         } 
 	} 
 	
+	/**
+	 * 
+	 * @param i
+	 * @throws ItemTooHeavyException
+	 */
 	private void loadItem(ListIterator<Robot> i) throws ItemTooHeavyException {
 		ListIterator<Item> j = pool.listIterator();
 		ILoadStrategy loadStrategy;
@@ -83,7 +87,7 @@ public class MailPool implements IMailPool {
 					
 					loadStrategy = LoadStrategyFactory.getFactory().getStrategy(mailItem);
 					
-					if (loadStrategy.loadItem(i, mailItem))
+					if (loadStrategy.loadItem(i, numRobots, mailItem))
 						j.remove();
 				}
 			} catch (Exception e) {

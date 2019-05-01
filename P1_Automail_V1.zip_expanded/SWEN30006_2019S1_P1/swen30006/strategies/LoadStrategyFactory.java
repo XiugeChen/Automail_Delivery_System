@@ -1,4 +1,7 @@
-package automail;
+package strategies;
+
+import automail.MailClassifier;
+import automail.MailItem;
 
 // Singleton load strategy factory
 public class LoadStrategyFactory {
