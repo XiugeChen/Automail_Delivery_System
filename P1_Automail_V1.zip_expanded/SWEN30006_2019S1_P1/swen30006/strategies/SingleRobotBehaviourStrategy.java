@@ -9,19 +9,19 @@ public class SingleRobotBehaviourStrategy implements IRobotBehaviourStrategy {
 	public void moveTowards(Robot robot, int destination) {
 		// TODO Auto-generated method stub
 		if(robot.getCurrentFloor() < destination){
-            robot.setCurrentFloor(robot.getCurrentFloor() + 1);
+            robot.moveUpperFloor();
         } else {
-        	robot.setCurrentFloor(robot.getCurrentFloor() - 1);
+        	robot.moverLowerFloor();
         }
 	}
 
 	@Override
 	public void deliverItem(Robot robot) throws ExcessiveDeliveryException {
 		// TODO Auto-generated method stub
-		robot.getDelivery().deliver(robot.getDeliverItem());
+		robot.makeDeliver();
 		
-		robot.setDeliverItem(null);
-		robot.setDeliveryCounter(robot.getDeliveryCounter() + 1);
+		robot.removeDeliverItem();
+		robot.increaseDeliveryCounter();
         if(robot.getDeliveryCounter() > 2){  // Implies a simulation bug
         	throw new ExcessiveDeliveryException();
         }

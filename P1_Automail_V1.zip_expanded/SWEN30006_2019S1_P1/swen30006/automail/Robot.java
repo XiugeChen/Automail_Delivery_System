@@ -1,7 +1,6 @@
 package automail;
 
 import exceptions.ExcessiveDeliveryException;
-import exceptions.ItemTooHeavyException;
 import strategies.IMailPool;
 import strategies.IRobotBehaviourStrategy;
 import strategies.RobotBehaviourStrategyFactory;
@@ -54,6 +53,29 @@ public class Robot {
     
     public void dispatch() {
     	receivedDispatch = true;
+    }
+    
+    public void makeDeliver() {
+    	if (deliveryItem != null && current_floor == destination_floor)
+    		delivery.deliver(deliveryItem);
+    }
+    
+    public void removeDeliverItem() {
+    	deliveryItem = null;
+    }
+    
+    public void increaseDeliveryCounter() {
+    	deliveryCounter++;
+    }
+    
+    public void moveUpperFloor() {
+    	if (current_floor < Building.FLOORS)
+    		current_floor++;
+    }
+    
+    public void moverLowerFloor() {
+    	if (current_floor > Building.LOWEST_FLOOR)
+    		current_floor--;
     }
 
     /**
@@ -194,31 +216,16 @@ public class Robot {
 	public int getCurrentFloor() {
 		return this.current_floor;
 	}
-	public MailItem getDeliverItem() {
-		return this.deliveryItem;
-	}
 	public int getDeliveryCounter() {
 		return this.deliveryCounter;
 	}
 	public RobotTeamState getCurrentTeamState() {
 		return this.current_team_state;
 	}
-	public IMailDelivery getDelivery() {
-		return this.delivery;
-	}
 	public int getMoveIntervalCounter() {
 		return this.moveIntervalCounter;
 	}
 	
-	public void setCurrentFloor(int floor) {
-		this.current_floor = floor;
-	}
-	public void setDeliverItem(MailItem mailItem) {
-		this.deliveryItem = mailItem;
-	}
-	public void setDeliveryCounter(int deliveryCounter) {
-		this.deliveryCounter = deliveryCounter;
-	}
 	public void setCurrentTeamState(RobotTeamState newTeamState) {
 		this.current_team_state = newTeamState;
 	}

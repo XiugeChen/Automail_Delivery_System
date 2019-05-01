@@ -13,9 +13,9 @@ public class TeamRobotBehaviourStrategy implements IRobotBehaviourStrategy {
 		// TODO Auto-generated method stub		
 		if (robot.getMoveIntervalCounter() >= MOVE_INTERVAL) {
 			if(robot.getCurrentFloor() < destination){
-				robot.setCurrentFloor(robot.getCurrentFloor() + 1);
+				robot.moveUpperFloor();
 			} else {
-				robot.setCurrentFloor(robot.getCurrentFloor() - 1);
+				robot.moverLowerFloor();
 			}
 			
 			robot.setMoveIntervalCounter(0);
@@ -28,11 +28,11 @@ public class TeamRobotBehaviourStrategy implements IRobotBehaviourStrategy {
 	public void deliverItem(Robot robot) throws ExcessiveDeliveryException {
 		// TODO Auto-generated method stub
 		if (robot.getCurrentTeamState() == RobotTeamState.TEAM_LEADER)
-			robot.getDelivery().deliver(robot.getDeliverItem());
+			robot.makeDeliver();
 		
 		robot.setCurrentTeamState(RobotTeamState.SINGLE);
-		robot.setDeliverItem(null);
-		robot.setDeliveryCounter(robot.getDeliveryCounter() + 1);
+		robot.removeDeliverItem();
+		robot.increaseDeliveryCounter();
         if(robot.getDeliveryCounter() > 2){  // Implies a simulation bug
         	throw new ExcessiveDeliveryException();
         }

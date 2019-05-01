@@ -1,6 +1,5 @@
 package strategies;
 
-import java.util.LinkedList;
 import java.util.ListIterator;
 
 import automail.MailItem;
