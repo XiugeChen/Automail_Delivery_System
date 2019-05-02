@@ -4,6 +4,7 @@ import exceptions.ExcessiveDeliveryException;
 import strategies.IMailPool;
 import strategies.IRobotBehaviourStrategy;
 import strategies.RobotBehaviourStrategyFactory;
+import strategies.SingleRobotBehaviourStrategy;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -98,7 +99,8 @@ public class Robot {
     }
     
     private void returnningStep() {
-    	IRobotBehaviourStrategy behaviourStrategy = RobotBehaviourStrategyFactory.getFactory().getStrategy(this);
+    	// all robots will return as single robots
+    	IRobotBehaviourStrategy behaviourStrategy = new SingleRobotBehaviourStrategy();
     	
     	/** If its current position is at the mailroom, then the robot should change state */
         if(current_floor == Building.MAILROOM_LOCATION){
