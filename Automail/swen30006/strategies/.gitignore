@@ -1,0 +1,13 @@
+/Automail.class
+/ILoadStrategy.class
+/IMailPool.class
+/IRobotBehaviourStrategy.class
+/LoadRobotStrategy.class
+/LoadRobotTeamStrategy.class
+/LoadStrategyFactory.class
+/MailPool$Item.class
+/MailPool$ItemComparator.class
+/MailPool.class
+/RobotBehaviourStrategyFactory.class
+/SingleRobotBehaviourStrategy.class
+/TeamRobotBehaviourStrategy.class
