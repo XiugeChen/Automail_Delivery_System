@@ -69,7 +69,8 @@ public class MailClassifier {
     }
     
     /**
-     * used to generate the map of number of robots and maximum weight could carrying
+     * Used to generate the map of number of robots and maximum weight could carrying. 
+     * Supports extension by specifying additional parameters.
      */
     private void populateTeamWeightLimit() {
     	teamWeightLimit.put(SMALL_TEAM, INDIVIDUAL_MAX_WEIGHT);
